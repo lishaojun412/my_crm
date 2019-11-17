@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="top.lishaojun.crm.mapper.PermissionMapper">
+    <resultMap id="BaseResultMap" type="top.lishaojun.crm.domain.Permission">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="resource" property="resource" jdbcType="VARCHAR"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from permission
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+    <insert id="insert" parameterType="top.lishaojun.crm.domain.Permission" useGeneratedKeys="true" keyProperty="id">
+        insert into permission (name, resource)
+        values (#{name,jdbcType=VARCHAR}, #{resource,jdbcType=VARCHAR})
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="top.lishaojun.crm.domain.Permission">
+        update permission
+        set name     = #{name,jdbcType=VARCHAR},
+            resource = #{resource,jdbcType=VARCHAR}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select id, name, resource
+        from permission
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select id, name, resource
+        from permission
+    </select>
+
+    <select id="selectByCondtionCount" resultType="java.lang.Long">
+        select count(*)
+        from permission p
+    </select>
+
+    <select id="selectByConditon" resultType="top.lishaojun.crm.domain.Permission">
+        select * from permission p
+        <if test="page!=null">
+            limit #{start},#{rows}
+        </if>
+    </select>
+    <select id="queryByRid" resultType="top.lishaojun.crm.domain.Permission">
+        select * from permission p where p.id in (select p_id from role_permission where r_id = #{rid})
+    </select>
+    <select id="queryByResource" resultType="top.lishaojun.crm.domain.Permission">
+        select * from permission where resource = #{function}
+    </select>
+    <select id="queryPermissionByEid" resultType="top.lishaojun.crm.domain.Permission">
+        SELECT * FROM permission WHERE id IN
+          (SELECT p_id FROM role_permission WHERE r_id IN
+                (SELECT r_id FROM emp_role WHERE e_id = #{id}))
+    </select>
+</mapper>

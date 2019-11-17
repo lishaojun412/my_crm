@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="top.lishaojun.crm.mapper.EmployeeMapper">
+    <resultMap id="BaseResultMap" type="Employee">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="username" property="username" jdbcType="VARCHAR"/>
+        <result column="realname" property="realname" jdbcType="VARCHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="tel" property="tel" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="inputtime" property="inputtime" jdbcType="DATE"/>
+        <result column="state" property="state" jdbcType="BIT"/>
+        <result column="admin" property="admin" jdbcType="BIT"/>
+        <association property="dept" javaType="Department" columnPrefix="dept_">
+            <id column="id" property="id"/>
+            <result column="name" property="name"/>
+        </association>
+    </resultMap>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from employee
+        where id = #{id,jdbcType=BIGINT}
+    </delete>
+    <delete id="deleteRelation">
+        delete from emp_role where e_id = #{eid}
+    </delete>
+    <insert id="insert" parameterType="top.lishaojun.crm.domain.Employee" useGeneratedKeys="true" keyProperty="id">
+        insert into employee (username, realname, password, tel, email, dept_id, inputtime, state, admin)
+        values (#{username,jdbcType=VARCHAR},
+                #{realname,jdbcType=VARCHAR},
+                #{password,jdbcType=VARCHAR},
+                #{tel,jdbcType=VARCHAR},
+                #{email,jdbcType=VARCHAR},
+                #{dept.id,jdbcType=VARCHAR},
+                #{inputtime,jdbcType=DATE},
+                #{state,jdbcType=BIT},
+                #{admin,jdbcType=BIT})
+    </insert>
+    <insert id="insertRelation">
+        insert into emp_role(e_id, r_id) VALUES (#{Eid},#{Rid})
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="top.lishaojun.crm.domain.Employee">
+        update employee
+        set username = #{username,jdbcType=VARCHAR},
+            realname = #{realname,jdbcType=VARCHAR},
+            tel      = #{tel,jdbcType=VARCHAR},
+            email    = #{email,jdbcType=VARCHAR},
+            dept_id  = #{dept.id,jdbcType=BIGINT}
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+    <update id="updateState" parameterType="java.lang.Long">
+        update employee
+        set state = 0
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <sql id="fieldSql">
+        e.id, e.username, e.realname, e.password, e.tel, e.email, e.dept_id, e.inputtime, e.state, e.admin,
+        d.id as dept_id, d.name as dept_name
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select
+        <include refid="fieldSql"/>
+        from employee e left join department d on e.dept_id = d.id
+        where e.id = #{id,jdbcType=BIGINT}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select
+        <include refid="fieldSql"/>
+        from employee e left join department d on e.dept_id = d.id
+    </select>
+
+    <sql id="conditionSql">
+        <where>
+            <if test="state!=null">
+                AND e.state = #{state}
+            </if>
+            <if test="keyword!=null">
+                AND (e.username like concat('%',#{keyword},'%') OR e.realname like concat('%',#{keyword},'%') )
+            </if>
+            <if test="beginDate!=null">
+                AND e.inputtime &gt;= #{beginDate}
+            </if>
+            <if test="endDate!=null">
+                AND e.inputtime &lt;= #{endDate}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectByCondtionCount" resultType="java.lang.Long">
+        select count(*) from employee e
+        <include refid="conditionSql"/>
+    </select>
+    <select id="selectByConditon" resultMap="BaseResultMap">
+        select
+        <include refid="fieldSql"/>
+        from employee e left join department d on e.dept_id = d.id
+        <include refid="conditionSql"/>
+        limit #{start},#{rows}
+    </select>
+    <select id="getLogin" resultType="top.lishaojun.crm.domain.Employee">
+        select *
+        from employee
+        where username = #{username}
+          and password = #{password}
+    </select>
+    <select id="queryRoleIdByEid" resultType="java.lang.Long">
+        select e.r_id from emp_role e where e.e_id = #{eid}
+    </select>
+</mapper>
